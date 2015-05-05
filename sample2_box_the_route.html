@@ -1,4 +1,4 @@
-<!-- RouteBoxer code sample from http://google-maps-utility-library-v3.googlecode.com/svn/trunk/routeboxer/docs/examples.html -->
+﻿<!-- RouteBoxer code sample from http://google-maps-utility-library-v3.googlecode.com/svn/trunk/routeboxer/docs/examples.html -->
 
 <!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN"
   "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
@@ -6,9 +6,8 @@
   <head>
     <meta http-equiv="content-type" content="text/html; charset=utf-8"/>
     <title>Google Maps JavaScript API Search Along a Route Example</title>
-    <script src="http://maps.google.com/maps/api/js" type="text/javascript"></script>
+    <script src="http://maps.google.com/maps/api/js?v=3.exp&signed_in=true&libraries=places" type="text/javascript"></script>
     <script src="http://google-maps-utility-library-v3.googlecode.com/svn/trunk/routeboxer/src/RouteBoxer.js" type="text/javascript"></script>
-      <script src="https://maps.googleapis.com/maps/api/js?v=3.exp&signed_in=true&libraries=places" type="text/javascript"></script>
     <script type="text/javascript">
 
     var map = null;
@@ -16,8 +15,9 @@
     var directions = null;
     var routeBoxer = null;
     var distance = null; // km
-    //var placesService = null; //for Places functionality
-    
+    var placesService = null; //for Places functionality
+    var infowindow = new google.maps.InfoWindow();
+
     function initialize() {
       // Default the map view to the continental U.S.
       var mapOptions = {
@@ -25,15 +25,15 @@
         mapTypeId: google.maps.MapTypeId.ROADMAP,
         zoom: 4
       };
-      
+
       map = new google.maps.Map(document.getElementById("map"), mapOptions);
-      routeBoxer = new RouteBoxer();
-      
-      directionService = new google.maps.DirectionsService();
-      directionsRenderer = new google.maps.DirectionsRenderer({ map: map });  
-    
-    //placesService = new google.maps.places.PlacesService(map);
-    
+      routeBoxer = new RouteBoxer(); // Class that returns a list of LatLngBounds (boxes) along a route.
+
+      directionService = new google.maps.DirectionsService(); // Class for getting directions from one place to another.
+      directionsRenderer = new google.maps.DirectionsRenderer({ map: map }); // Class that renders the directions on screen.
+
+      placesService = new google.maps.places.PlacesService(map); // Class for searching for places of interest within a LatLngBounds scope.
+      infowindow = new google.maps.InfoWindow(); // The window that pops up when you click on a place marker. Gives details about the place.
     }
     
     function route() {
@@ -78,25 +78,67 @@
           map: map
         });
           
-//        var request = {
-//        bounds: boxes[i],
-//        types: ['store']
-//        };
-//          
-//        placesService.nearbySearch(request, callback);
+        var request = {
+        bounds: boxes[i],
+        types: ['store'] // TODO: Make this customizable. Add more places types.
+        };
+          
+        placesService.nearbySearch(request, callback);
 
       }
     }
     
-//    function callback(results, status) {
-//        if (status == google.maps.places.PlacesServiceStatus.OK) {
-//            for (var i = 0; i < results.length; i++) {
-//            var place = results[i];
-//            createMarker(results[i]);
-//            }
-//        }
-//    }
-        
+    function callback(results, status) {
+        if (status == google.maps.places.PlacesServiceStatus.OK) {
+            for (var i = 0; i < results.length; i++) {
+            var place = results[i];
+            createMarker(results[i]);
+            }
+        }
+    }
+
+    function createMarker(place) {
+        var placeLoc = place.geometry.location;
+
+        // If this place type has an icon (e.g., a shopping bag icon to represent type=store),
+        // use the icon as the marker. Otherwise, we'll use default marker.
+        var image = null;
+        if (place.icon) {
+            var image = new google.maps.MarkerImage(
+                      place.icon, new google.maps.Size(25, 25),
+                      new google.maps.Point(0, 0), new google.maps.Point(10, 20),
+                      new google.maps.Size(25, 25));
+        }
+
+        var marker = new google.maps.Marker({
+            map: map,
+            icon: image,
+            position: place.geometry.location
+        });
+
+        // Add an event listener for the "click" event so that when user clicks on this marker,
+        // we will show details about this place.
+        google.maps.event.addListener(marker, 'click', function () {
+            var request = {
+                reference: place.reference
+            };
+
+            // Now make the request to get more details.
+            placesService.getDetails(request, function (place, status) {
+                if (status == google.maps.places.PlacesServiceStatus.OK) {
+                    var contentStr = '<p> Name: ' + place.name + '</p>';
+                    contentStr += '<p> Type: ' + place.types + '</p>'; // TODOD: Add more details? Style them?
+                    infowindow.setContent(contentStr);
+                    infowindow.open(map, marker);
+                } else {
+                    var contentStr = "No Result, status=" + status;
+                    infowindow.setContent(contentStr);
+                    infowindow.open(map, marker);
+                }
+            });
+        });
+    }
+
     // Clear boxes currently on the map
     function clearBoxes() {
       if (boxpolys != null) {
