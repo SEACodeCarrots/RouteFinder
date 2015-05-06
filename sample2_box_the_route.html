@@ -17,7 +17,7 @@
     var distance = null; // km
     var placesService = null; //for Places functionality
     var placeDetail = null;
-    
+    var infowindow = null;
 
     function initialize() {
       // Default the map view to the continental U.S.
@@ -129,7 +129,28 @@
                 // Add an event listener for the "click" event so that when user clicks on this marker,
                 // we will show details about this place.
                 google.maps.event.addListener(marker, 'click', function() {
-                infowindow.setContent(details.name + "<br />" + details.formatted_address +"<br />" + details.website + "<br />" + details.rating + "<br />" + details.formatted_phone_number);
+                var contentString = '';
+                if (details.name != null) {
+                    contentString += details.name + "<br />";
+                }
+                
+                if (details.formatted_address != null) {
+                    contentString += details.formatted_address +"<br />";
+                }
+                    
+                if (details.website != null) {
+                    contentString += details.website + "<br />";
+                }
+                    
+                if (details.rating != null) {
+                    contentString += details.rating + "<br />";
+                }
+                
+                if (details.formatted_phone_number != null) {
+                    contentString += details.formatted_phone_number;
+                }
+                    
+                infowindow.setContent(contentString);
                 infowindow.open(map, this);
                 });
             }
