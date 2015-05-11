@@ -17,7 +17,7 @@
     var distance = null; // km
     var placesService = null; //for Places functionality
     var placeDetail = null;
-    
+    var apiDelay = 10000;
 
     function initialize() {
       // Default the map view to the continental U.S.
@@ -95,14 +95,27 @@
 
     
     function callback(results, status) {
+        
         if (status == google.maps.places.PlacesServiceStatus.OK) {
             for (var i = 0; i < results.length; i++) {
             var place = results[i];
             createMarker(results[i]);
             }
         }
+        else if (status != google.maps.places.PlacesServiceStatus.OK) {
+                alert("Not OK");
+                //setTimeout(callback(results[i], status), apiDelay);
+        }           
     }
-        
+    
+    function populateInfoMarker(marker, details) {
+        // Add an event listener for the "click" event so that when user clicks on this marker,
+        // we will show details about this place.
+        google.maps.event.addListener(marker, 'click', function() {
+            infowindow.setContent(details.name + "<br />" + details.formatted_address +"<br />" + details.website + "<br />" + details.rating + "<br />" + details.formatted_phone_number);
+            infowindow.open(map, this);
+        });
+    }
         
     function createMarker(place) {
         var placeLoc = place.geometry.location;
@@ -126,13 +139,13 @@
         //placeDetail.getDetails(detailRequest, function(details, status) {
         placesService.getDetails(detailRequest, function(details, status) {
             if (status == google.maps.places.PlacesServiceStatus.OK) {
-                // Add an event listener for the "click" event so that when user clicks on this marker,
-                // we will show details about this place.
-                google.maps.event.addListener(marker, 'click', function() {
-                infowindow.setContent(details.name + "<br />" + details.formatted_address +"<br />" + details.website + "<br />" + details.rating + "<br />" + details.formatted_phone_number);
-                infowindow.open(map, this);
-                });
+                populateInfoMarker(marker, details);
             }
+            else if (status != google.maps.places.PlacesServiceStatus.OK) {
+                    alert("Wait a few seconds and press again for best results");    
+                    setTimeout(createMarker(place), apiDelay);    
+                }
+            
         
         //google.maps.event.addListener(marker, 'click', function() {
         //infowindow.setContent(place.name + "<br />" + place.formatted_address);
