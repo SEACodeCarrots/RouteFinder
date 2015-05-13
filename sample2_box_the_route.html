@@ -17,7 +17,7 @@
     var placesService = null; //for Places functionality
     var placeDetail = null;
     var infowindow = null;
-    var apiDelay = 10000;
+    var apiDelay = 5000;
     function initialize() {
       // Default the map view to the continental U.S.
       var mapOptions = {
@@ -71,9 +71,9 @@
         boxpolys[i] = new google.maps.Rectangle({
           bounds: boxes[i],
           fillOpacity: 0,
-          strokeOpacity: 1.0,
+          strokeOpacity: 0,
           strokeColor: '#000000',
-          strokeWeight: 1,
+          strokeWeight: 0,
           map: map
         });
         var request = {
